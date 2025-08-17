@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Scientific Calculator</title>
+    <style>
+        :root {
+            --space-dark: #0a0e17;
+            --space-purple: #4e2a8e;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00aa;
+            --star-yellow: #ffe600;
+            --calculator-bg: rgba(10, 14, 23, 0.9);
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: var(--neon-blue);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .calculator-container {
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .calculator {
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            width: 340px;
+            background-color: var(--calculator-bg);
+            box-shadow: 0 0 20px var(--neon-blue),
+                        0 0 40px rgba(0, 243, 255, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .display-container {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            position: relative;
+        }
+        
+        .history {
+            min-height: 20px;
+            font-size: 0.9em;
+            color: var(--neon-pink);
+            text-align: right;
+            opacity: 0.7;
+        }
+        
+        .display {
+            color: var(--neon-blue);
+            padding: 10px 0;
+            text-align: right;
+            font-size: 2.5em;
+            height: 60px;
+            box-sizing: border-box;
+            text-shadow: 0 0 5px var(--neon-blue);
+            letter-spacing: 2px;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* changed from 5 to 4 */
+            grid-gap: 1px;
+            background-color: rgba(0, 243, 255, 0.1);
+        }
+        
+        button {
+            border: none;
+            padding: 15px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background-color: rgba(78, 42, 142, 0.3);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: rgba(78, 42, 142, 0.5);
+            color: var(--neon-blue);
+        }
+        
+        .operator {
+            background-color: rgba(0, 243, 255, 0.2);
+            color: var(--neon-blue);
+        }
+        
+        .equals {
+            background-color: var(--neon-pink);
+            color: white;
+            grid-column: span 2;
+        }
+        
+        .equals:hover {
+            background-color: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+        
+        .clear {
+            background-color: rgba(255, 0, 170, 0.2);
+            color: var(--neon-pink);
+        }
+        
+        .special {
+            color: var(--star-yellow);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="calculator">
+            <div class="display-container">
+                <div class="history" id="history"></div>
+                <div class="display" id="display">0</div>
+            </div>
+            <div class="buttons">
+    <button class="clear" onclick="clearDisplay()">AC</button>
+    <button class="special" onclick="toggleSign()">+/-</button>
+    <button class="special" onclick="percentage()">%</button>
+    <button class="operator" onclick="chooseOperation('/')">÷</button>
+    
+    <button onclick="appendToDisplay('7')">7</button>
+    <button onclick="appendToDisplay('8')">8</button>
+    <button onclick="appendToDisplay('9')">9</button>
+    <button class="operator" onclick="chooseOperation('*')">×</button>
+    
+    <button onclick="appendToDisplay('4')">4</button>
+    <button onclick="appendToDisplay('5')">5</button>
+    <button onclick="appendToDisplay('6')">6</button>
+    <button class="operator" onclick="chooseOperation('-')">−</button>
+    
+    <button onclick="appendToDisplay('1')">1</button>
+    <button onclick="appendToDisplay('2')">2</button>
+    <button onclick="appendToDisplay('3')">3</button>
+    <button class="operator" onclick="chooseOperation('+')">+</button>
+    
+    
+    <button onclick="appendToDisplay('0')">0</button>
+    <button onclick="appendToDisplay('.')">.</button>
+    <button class="equals" onclick="calculate()">=</button>
+</div>
+
+
+        </div>
+    </div>
+
+    <script>
+      
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let resetInput = false;
+        let calculationHistory = [];
+        
+        const display = document.getElementById('display');
+        const historyDisplay = document.getElementById('history');
+        
+        function updateDisplay() {
+            display.textContent = currentInput;
+        }
+        
+        function updateHistory() {
+            historyDisplay.textContent = calculationHistory.join(' ');
+        }
+        
+        function appendToDisplay(value) {
+            if (currentInput === '0' || resetInput) {
+                currentInput = '';
+                resetInput = false;
+            }
+            
+            if (value === '.' && currentInput.includes('.')) {
+                return;
+            }
+            
+            currentInput += value;
+            updateDisplay();
+        }
+        
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            calculationHistory = [];
+            updateDisplay();
+            updateHistory();
+        }
+        
+        function deleteLastChar() {
+            if (currentInput.length === 1) {
+                currentInput = '0';
+            } else {
+                currentInput = currentInput.slice(0, -1);
+            }
+            updateDisplay();
+        }
+        
+        function chooseOperation(op) {
+            if (currentInput === '') return;
+            
+            if (previousInput !== '') {
+                calculate();
+            }
+            
+            operation = op;
+            previousInput = currentInput;
+            calculationHistory.push(currentInput, op);
+            currentInput = '';
+            resetInput = true;
+            updateDisplay();
+            updateHistory();
+        }
+        
+        function calculate() {
+            let computation;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+            
+            if (isNaN(prev)) return;
+            
+            if (operation === '/' && current === 0) {
+                currentInput = 'Error';
+                updateDisplay();
+                return;
+            }
+            
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                default:
+                    return;
+            }
+            
+            calculationHistory.push(currentInput, '=', computation.toString());
+            currentInput = computation.toString();
+            operation = null;
+            previousInput = '';
+            resetInput = true;
+            updateDisplay();
+            updateHistory();
+        }
+        
+        function toggleSign() {
+            currentInput = (parseFloat(currentInput) * -1).toString();
+            updateDisplay();
+        }
+        
+        function percentage() {
+            currentInput = (parseFloat(currentInput) / 100).toString();
+            updateDisplay();
+        }
+        
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                appendToDisplay(event.key);
+            } else if (event.key === '.') {
+                appendToDisplay('.');
+            } else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+                chooseOperation(event.key);
+            } else if (event.key === 'Enter' || event.key === '=') {
+                calculate();
+            } else if (event.key === 'Escape') {
+                clearDisplay();
+            } else if (event.key === 'Backspace') {
+                deleteLastChar();
+            } else if (event.key === '%') {
+                percentage();
+            }
+        });
+    </script>
+</body>
+</html>
